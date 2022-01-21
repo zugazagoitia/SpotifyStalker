@@ -5,9 +5,9 @@ package com.zugazagoitia.spotifystalker.data.model;
  */
 public class LoggedInUser {
 
-    private String token;
-    private String username;
-    private RichProfile user;
+    private final String token;
+    private final String username;
+    private final RichProfile user;
 
     public LoggedInUser(String token, String username, RichProfile user) {
         this.token = token;
@@ -23,8 +23,8 @@ public class LoggedInUser {
         return user;
     }
 
-
     public String getUsername() {
         return username;
     }
+
 }

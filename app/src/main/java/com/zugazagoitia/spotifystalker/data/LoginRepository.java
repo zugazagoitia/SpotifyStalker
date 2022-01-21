@@ -1,5 +1,7 @@
 package com.zugazagoitia.spotifystalker.data;
 
+import android.content.Context;
+
 import com.zugazagoitia.spotifystalker.data.model.LoggedInUser;
 import com.zugazagoitia.spotifystalker.data.model.RichProfile;
 
@@ -61,10 +63,18 @@ public class LoginRepository {
         // @see https://developer.android.com/training/articles/keystore
     }
 
-    public Result<LoggedInUser> login(String username, String password) {
+    public Result<LoggedInUser> login(String username, String password,boolean rememberPassword, Context ctx) {
 
-        Result<LoggedInUser> result = dataSource.login(username, password);
+        Result<LoggedInUser> result = dataSource.login(username, password,rememberPassword,ctx);
         if (result instanceof Result.Success) {
+            setLoggedInUser(((Result.Success<LoggedInUser>) result).getData());
+        }
+        return result;
+    }
+
+    public Result<LoggedInUser> loginBlob(String username, String blob,String deviceId){
+        Result<LoggedInUser> result = dataSource.loginBlob(username,blob,deviceId);
+        if (result instanceof Result.Success){
             setLoggedInUser(((Result.Success<LoggedInUser>) result).getData());
         }
         return result;

@@ -1,6 +1,5 @@
 package com.zugazagoitia.spotifystalker;
 
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -8,7 +7,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -20,6 +18,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.bumptech.glide.Glide;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
+import com.google.firebase.analytics.FirebaseAnalytics;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.zugazagoitia.spotifystalker.data.LoginRepository;
 import com.zugazagoitia.spotifystalker.data.model.FriendList;
 import com.zugazagoitia.spotifystalker.data.model.Profile;
@@ -44,7 +44,9 @@ import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity {
 
-    ListView listview;
+    ListView listView;
+
+    private FirebaseAnalytics mFirebaseAnalytics;
 
     private List<UserPlayingInfo> beans;
     private ListbaseAdapter listbaseAdapter;
@@ -54,6 +56,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+
         if(!LoginRepository.isLoggedIn()){
             Intent intent = new Intent(getBaseContext(), LoginActivity.class);
             startActivity(intent);
@@ -62,22 +66,24 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
-        listview = (ListView) findViewById(R.id.listview);
+        listView = findViewById(R.id.listview);
+
+        //listView.setDivider(AppCompatResources.getDrawable(this,R.drawable.divider));
+
         beans = new ArrayList<UserPlayingInfo>();
 
         updateFriendList();
 
 
-
         RichProfile user = LoginRepository.getUserProfile();
 
-        TextView followers =(TextView)findViewById(R.id.followers_value);
-        TextView following =(TextView)findViewById(R.id.following_value);
-        TextView playlists =(TextView)findViewById(R.id.playlists_value);
-        TextView name =(TextView)findViewById(R.id.main_name);
-        TextView username =(TextView)findViewById(R.id.main_username);
+        TextView followers = findViewById(R.id.followers_value);
+        TextView following = findViewById(R.id.following_value);
+        TextView playlists = findViewById(R.id.playlists_value);
+        TextView name = findViewById(R.id.main_name);
+        TextView username = findViewById(R.id.main_username);
 
-        ImageView profilePic = (ImageView)findViewById(R.id.main_pofilepic);
+        ImageView profilePic = findViewById(R.id.main_profilepic);
 
         name.setText(user.getName());
         followers.setText(String.valueOf(user.getFollowersCount()));
@@ -124,122 +130,116 @@ public class MainActivity extends AppCompatActivity {
     public void updateFriendList(View v){updateFriendList();}
 
     public void updateFriendList() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
+        new Thread(() -> {
 
-                String user = LoginRepository.getUsername();
-                String token = LoginRepository.getToken();
+            String user = LoginRepository.getUsername();
+            String token = LoginRepository.getToken();
 
-                String url = MessageFormat.format("https://spclient.wg.spotify.com/user-profile-view/v3/profile/{0}/following/", user);
+            String url = MessageFormat.format("https://spclient.wg.spotify.com/user-profile-view/v3/profile/{0}/following/", user);
 
-                OkHttpClient client = new OkHttpClient();
+            OkHttpClient client = new OkHttpClient();
 
-                //Call api using okhttp
-                Request request = new Request.Builder()
-                        .url(url)
-                        .addHeader("Authorization", "Bearer " + token)
-                        .build();
+            //Call api using okhttp
+            Request request = new Request.Builder()
+                    .url(url)
+                    .addHeader("Authorization", "Bearer " + token)
+                    .build();
 
-                try (Response response = client.newCall(request).execute()){
+            try (Response response = client.newCall(request).execute()){
 
 
-                    //NEW CODE
+                //NEW CODE
 
-                    ObjectMapper objMapper = new ObjectMapper();
+                ObjectMapper objMapper = new ObjectMapper();
 
-                    String responseBody = response.body().string();
-                    System.out.println(responseBody);
-                    FriendList friends = objMapper.readValue(responseBody, FriendList.class);
+                String responseBody = response.body().string();
+                //System.out.println(responseBody);
+                FriendList friends = objMapper.readValue(responseBody, FriendList.class);
 
 
-                    ArrayList<UserPlayingInfo> friendsSongs = new ArrayList<>();
+                ArrayList<UserPlayingInfo> friendsSongs = new ArrayList<>();
 
-                    Predicate<Profile> predicate = profile -> (profile.getFollowingCount() == 0 && profile.getFollowersCount() >= 10); //Verdadero si es "famoso"
-                    friends.setProfiles(friends.getProfiles()
-                                                .stream()
-                                                .filter(predicate.negate())
-                                                .collect(Collectors.toList()));
-                    String url2 = "https://spclient.wg.spotify.com/presence-view/v1/user/{0}";
-                    CountDownLatch countDownLatch = new CountDownLatch(friends.getProfiles().size());
-                    for (Profile p :friends.getProfiles()) {
+                Predicate<Profile> predicate = profile -> (profile.getFollowingCount() == 0 && profile.getFollowersCount() >= 10); //Verdadero si es "famoso"
+                friends.setProfiles(friends.getProfiles()
+                                            .stream()
+                                            .filter(predicate.negate())
+                                            .collect(Collectors.toList()));
+                String url2 = "https://spclient.wg.spotify.com/presence-view/v1/user/{0}";
+                CountDownLatch countDownLatch = new CountDownLatch(friends.getProfiles().size());
+                for (Profile p :friends.getProfiles()) {
 
-                        System.out.println(p.getUri().split(":")[2]);
-                        Request request2 = new Request.Builder()
-                                .url(MessageFormat.format(url2, p.getUri().split(":")[2]))
-                                .addHeader("Authorization", "Bearer " + token)
-                                .build();
+                    //System.out.println(p.getUri().split(":")[2]);
+                    Request request2 = new Request.Builder()
+                            .url(MessageFormat.format(url2, p.getUri().split(":")[2]))
+                            .addHeader("Authorization", "Bearer " + token)
+                            .build();
 
-                        //Asynchronous call
-                        client.newCall(request2).enqueue(new Callback() {
-                            @Override
-                            public void onFailure(Call call, IOException e) {
-                                countDownLatch.countDown();
+                    //Asynchronous call
+                    client.newCall(request2).enqueue(new Callback() {
+                        @Override
+                        public void onFailure(Call call, IOException e) {
+                            countDownLatch.countDown();
+                        }
+                        public void onResponse(Call call, Response response) throws IOException {
+                            String responseBody2 = response.body().string();
+                            System.out.println(responseBody2);
+
+                            try {
+                                friendsSongs.add(objMapper.readValue(responseBody2, UserPlayingInfo.class));
+                            } catch (MismatchedInputException e){
+                                FirebaseCrashlytics.getInstance().recordException(e);
                             }
-                            public void onResponse(Call call, Response response) throws IOException {
-                                String responseBody2 = response.body().string();
-                                System.out.println(responseBody2);
-
-                                try {
-                                    friendsSongs.add(objMapper.readValue(responseBody2, UserPlayingInfo.class));
-                                } catch (MismatchedInputException e){
-
-                                }
-                                countDownLatch.countDown();
-                            }
-                        });
-
-                    }
-
-                    countDownLatch.await();
-
-                    beans = friendsSongs;
-
-                    new Handler(Looper.getMainLooper()).post(() -> {
-                        listbaseAdapter = new ListbaseAdapter(MainActivity.this, beans);
-                        listview.setAdapter(listbaseAdapter);
-                        listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                            @Override
-                            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                                ListbaseAdapter.ViewHolder vh = (ListbaseAdapter.ViewHolder) view.getTag();
-
-                                // setup the alert builder
-                                AlertDialog.Builder builder = new AlertDialog.Builder(view.getContext());
-
-                                String[] animals = {"User", "Album", "Track", "Context"};
-                                builder.setItems(animals, new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        switch (which) {
-                                            case 0: // User
-                                                openSpotifyUri(vh.userUri);
-                                                break;
-                                            case 1: // Album
-                                                openSpotifyUri(vh.albumUri);
-                                                break;
-                                            case 2: // Track
-                                                openSpotifyUri(vh.trackUri);
-                                                break;
-                                            case 3: // Context
-                                                openSpotifyUri(vh.contextUri);
-                                                break;
-                                        }
-                                    }
-                                });
-
-                                AlertDialog dialog = builder.create();
-                                dialog.show();
-
-
-                            }
-                        });
+                            countDownLatch.countDown();
+                        }
                     });
-                } catch (Exception e) {
-                    e.printStackTrace();
+
                 }
 
+                countDownLatch.await();
 
+                friendsSongs.sort((o1, o2) -> (int) (o2.getTimestamp()-o1.getTimestamp()));
+
+                beans = friendsSongs;
+
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    listbaseAdapter = new ListbaseAdapter(MainActivity.this, beans);
+                    listView.setAdapter(listbaseAdapter);
+                    listView.setOnItemClickListener((parent, view, position, id) -> {
+                        ListbaseAdapter.ViewHolder vh = (ListbaseAdapter.ViewHolder) view.getTag();
+
+                        // setup the alert builder
+                        AlertDialog.Builder builder = new AlertDialog.Builder(view.getContext());
+
+                        String[] animals = {"User", "Album", "Track", "Context"};
+                        builder.setItems(animals, (dialog, which) -> {
+                            switch (which) {
+                                case 0: // User
+                                    openSpotifyUri(vh.userUri);
+                                    break;
+                                case 1: // Album
+                                    openSpotifyUri(vh.albumUri);
+                                    break;
+                                case 2: // Track
+                                    openSpotifyUri(vh.trackUri);
+                                    break;
+                                case 3: // Context
+                                    openSpotifyUri(vh.contextUri);
+                                    break;
+                            }
+                        });
+
+                        AlertDialog dialog = builder.create();
+                        dialog.show();
+
+
+                    });
+                });
+            } catch (Exception e) {
+                FirebaseCrashlytics.getInstance().recordException(e);
+                e.printStackTrace();
             }
+
+
         }).start();
     }
 

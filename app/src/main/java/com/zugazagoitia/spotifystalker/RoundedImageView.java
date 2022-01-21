@@ -2,20 +2,17 @@ package com.zugazagoitia.spotifystalker;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapShader;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
-import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.VectorDrawable;
 import android.os.Build;
 import android.util.AttributeSet;
-import android.widget.ImageView;
 
 /**
  * Created by Rp on 3/17/2016.
@@ -24,7 +21,6 @@ public class RoundedImageView extends androidx.appcompat.widget.AppCompatImageVi
 
     public RoundedImageView(Context context) {
         super(context);
-        // TODO Auto-generated constructor stub
     }
 
     public RoundedImageView(Context context, AttributeSet attrs) {
@@ -48,11 +44,10 @@ public class RoundedImageView extends androidx.appcompat.widget.AppCompatImageVi
             return;
         }
 
-        Bitmap b = null;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP
-                && drawable instanceof VectorDrawable) {
-            ((VectorDrawable) drawable).draw(canvas);
-            b = Bitmap.createBitmap(canvas.getWidth(), canvas.getHeight(), Bitmap.Config.ARGB_8888);
+        Bitmap b;
+        if (drawable instanceof VectorDrawable) {
+            drawable.draw(canvas);
+            b = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
             Canvas c = new Canvas();
             c.setBitmap(b);
             drawable.draw(c);

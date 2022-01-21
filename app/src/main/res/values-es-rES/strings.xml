@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SpotifyStalker</string>
+    <string name="username">Usuario</string>
+    <string name="action_sign_in">Inicia Sesión o Regístrate</string>
+    <string name="action_sign_in_short">Iniciar Sesión</string>
+    <string name="remember_password">Recordar Contraseña</string>
+    <string name="playlists">Playlists</string>
+    <string name="invalid_password">La contraseña es inválida</string>
+    <string name="prompt_password">Contraseña</string>
+    <string name="invalid_username">Usuario inválido</string>
+    <string name="nombre_usuario">Nombre</string>
+    <string name="name">Nombre</string>
+    <string name="login_failed">Incio de sesión fallido</string>
+    <string name="welcome">"Bienvenido ! "</string>
+    <string name="following">Siguiendo</string>
+    <string name="followers">Seguidores</string>
+    <string name="prompt_email">Email</string>
+</resources>

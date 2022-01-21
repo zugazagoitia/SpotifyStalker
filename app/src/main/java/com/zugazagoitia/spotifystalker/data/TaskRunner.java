@@ -24,9 +24,7 @@ public class TaskRunner {
                 e.printStackTrace();
             }
             R finalResult = result;
-            handler.post(() -> {
-                callback.onComplete(finalResult);
-            });
+            handler.post(() -> callback.onComplete(finalResult));
         });
     }
 }

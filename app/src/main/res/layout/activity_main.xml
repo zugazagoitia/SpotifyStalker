@@ -24,7 +24,7 @@
             android:clickable="true"
             android:onClick="updateFriendList"
             app:srcCompat="@android:drawable/stat_notify_sync"
-            tools:ignore="SpeakableTextPresentCheck" />
+            tools:ignore="SpeakableTextPresentCheck,ImageContrastCheck" />
 
         <View
             android:id="@+id/view"
@@ -65,7 +65,7 @@
                 android:gravity="center"
                 android:text="@string/username"
                 android:textColor="#fff"
-                android:textSize="13dp" />
+                android:textSize="13sp" />
 
         </LinearLayout>
 
@@ -76,12 +76,13 @@
             android:layout_weight="1" />
 
         <ImageView
-            android:id="@+id/main_pofilepic"
+            android:id="@+id/main_profilepic"
             android:layout_width="60dp"
             android:layout_height="match_parent"
             android:layout_gravity="right"
             android:layout_weight="0"
-            app:srcCompat="@drawable/resource_default" />
+            app:srcCompat="@drawable/resource_default"
+            tools:ignore="ImageContrastCheck" />
 
     </LinearLayout>
 
@@ -92,7 +93,8 @@
         android:clickable="true"
         android:minHeight="48dp"
         android:onClick="openMainProfile"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:baselineAligned="false">
 
 
         <LinearLayout
@@ -108,7 +110,7 @@
                 android:gravity="center"
                 android:text="7"
                 android:textColor="#009293"
-                android:textSize="16dp"
+                android:textSize="16sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -117,7 +119,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:text="@string/following"
-                android:textColor="#000" />
+                android:textColor="?android:attr/textColorPrimary" />
         </LinearLayout>
 
         <LinearLayout
@@ -133,7 +135,7 @@
                 android:gravity="center"
                 android:text="26"
                 android:textColor="#009293"
-                android:textSize="16dp"
+                android:textSize="16sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -142,7 +144,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:text="@string/followers"
-                android:textColor="#000" />
+                android:textColor="?android:attr/textColorPrimary" />
         </LinearLayout>
 
 
@@ -159,7 +161,7 @@
                 android:gravity="center"
                 android:text="7"
                 android:textColor="#009293"
-                android:textSize="16dp"
+                android:textSize="16sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -168,7 +170,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:text="@string/playlists"
-                android:textColor="#000" />
+                android:textColor="?android:attr/textColorPrimary" />
         </LinearLayout>
 
 
@@ -179,6 +181,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="5dp"
-        android:divider="#00000000"></ListView>
+        android:divider="@drawable/divider"
+        android:dividerHeight="1dp"></ListView>
 
 </LinearLayout>

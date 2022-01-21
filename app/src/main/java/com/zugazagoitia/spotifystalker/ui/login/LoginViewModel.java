@@ -4,7 +4,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import android.util.Patterns;
+import android.content.Context;
 
 import com.zugazagoitia.spotifystalker.data.LoginRepository;
 import com.zugazagoitia.spotifystalker.data.Result;
@@ -13,10 +13,6 @@ import com.zugazagoitia.spotifystalker.data.model.LoggedInUser;
 import com.zugazagoitia.spotifystalker.R;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 public class LoginViewModel extends ViewModel {
 
@@ -41,25 +37,26 @@ public class LoginViewModel extends ViewModel {
     class LoginTask implements Callable<Result<LoggedInUser>> {
         private final String username;
         private final String password;
+        private final boolean rememberPassword;
+        private final Context ctx;
 
-        public LoginTask(String username,String password) {
+        public LoginTask(String username,String password,boolean rememberPassword,Context ctx) {
             this.username = username;
             this.password = password;
+            this.rememberPassword = rememberPassword;
+            this.ctx = ctx;
         }
 
         @Override
         public Result<LoggedInUser> call() {
-            return loginRepository.login(username,password);
+            return loginRepository.login(username,password,rememberPassword,ctx);
         }
     }
 
-    public void login(String username, String password) {
+    public void login(String username, String password,boolean rememberPassword, Context ctx) {
         // can be launched in a separate asynchronous job
 
-        taskRunner.executeAsync(new LoginTask(username,password), (result) -> {
-            // MyActivity activity = activityReference.get();
-            // activity.progressBar.setVisibility(View.GONE);
-            // populateData(activity, data) ;
+        taskRunner.executeAsync(new LoginTask(username,password,rememberPassword,ctx), (result) -> {
 
             if (result instanceof Result.Success) {
                 LoggedInUser data = ((Result.Success<LoggedInUser>) result).getData();
@@ -70,9 +67,42 @@ public class LoginViewModel extends ViewModel {
 
         });
 
+    }
 
+    class BlobLoginTask implements Callable<Result<LoggedInUser>> {
+        private final String username;
+        private final String blob;
+        private final String deviceId;
+
+        public BlobLoginTask(String username,String blob,String deviceId) {
+            this.username = username;
+            this.blob = blob;
+            this.deviceId = deviceId;
+        }
+
+        @Override
+        public Result<LoggedInUser> call() {
+            return loginRepository.loginBlob(username,blob,deviceId);
+        }
+    }
+
+    public void loginBlob(String username, String blob,String deviceId) {
+        // can be launched in a separate asynchronous job
+
+        taskRunner.executeAsync(new BlobLoginTask(username,blob,deviceId), (result) -> {
+
+            if (result instanceof Result.Success) {
+                LoggedInUser data = ((Result.Success<LoggedInUser>) result).getData();
+                loginResult.setValue(new LoginResult(new LoggedInUserView(data.getUsername())));
+            } else {
+                loginResult.setValue(new LoginResult(R.string.login_failed));
+            }
+
+        });
 
     }
+
+
 
     public void loginDataChanged(String username, String password) {
         if (!isUserNameValid(username)) {
